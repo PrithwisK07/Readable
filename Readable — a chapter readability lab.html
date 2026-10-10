@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Readable — a chapter readability lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:wght@400;500&family=JetBrains+Mono&display=swap">
+<style>
+:root{--bg:#ecebe4;--ink:#0d0d0d;--mut:#6d6b63;--ln:#0d0d0d33;--ac:#ff3d00;
+--disp:"Instrument Serif","Noto Serif Devanagari","Noto Serif Bengali",Georgia,serif;--sans:"Inter Tight",system-ui,-apple-system,"Segoe UI","Noto Sans Devanagari",sans-serif;--mono:"JetBrains Mono",ui-monospace,Menlo,monospace;--read:Georgia,"Noto Serif Devanagari","Noto Serif Bengali","Noto Serif Gujarati","Noto Serif Gurmukhi","Noto Serif Tamil","Noto Serif Telugu","Noto Serif Kannada","Noto Serif Malayalam","Noto Serif Oriya",serif;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0b0a;--ink:#ecebe4;--mut:#8f8d85;--ln:#ecebe433;--ac:#ff5a2a}}
+:root[data-theme="dark"]{--bg:#0b0b0a;--ink:#ecebe4;--mut:#8f8d85;--ln:#ecebe433;--ac:#ff5a2a}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 var(--sans);overflow-x:hidden;transition:background .5s,color .5s}
+body::after{content:"";position:fixed;inset:-50%;pointer-events:none;z-index:50;opacity:.12;animation:gr 1s steps(4) infinite;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+@keyframes gr{25%{transform:translate(-3%,2%)}50%{transform:translate(2%,-3%)}75%{transform:translate(-2%,-1%)}}
+.w{padding:0 clamp(16px,4vw,56px);max-width:1440px;margin:0 auto}
+.mono{font:11px/1.4 var(--mono);text-transform:uppercase;letter-spacing:.09em;color:var(--mut)}
+#prog{position:fixed;top:0;left:0;height:2px;width:100%;background:var(--ac);transform:scaleX(0);transform-origin:left;z-index:60}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:40;display:flex;justify-content:space-between;align-items:center;padding:16px 0}
+header b{font:400 22px var(--disp);letter-spacing:-.01em}
+header button{background:none;border:0;color:var(--ink);cursor:pointer;font:11px var(--mono);text-transform:uppercase;letter-spacing:.09em}
+h1{font:400 clamp(52px,12.5vw,176px)/.9 var(--disp);letter-spacing:-.035em;margin:6vh 0 4vh}
+h1 em{color:var(--ac)}
+.ln{display:block;overflow:hidden;padding-bottom:.1em}
+.ln span{display:block;transform:translateY(108%);animation:rise 1.2s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(.1s + var(--n)*.12s)}
+@keyframes rise{to{transform:none}}
+.lede{max-width:520px;color:var(--mut);margin:0 0 6vh;opacity:0;animation:fade 1s .7s forwards}
+@keyframes fade{to{opacity:1}}
+.mq{overflow:hidden;border-block:1px solid var(--ln);padding:14px 0;margin:0 calc(-1*clamp(16px,4vw,56px))}
+.mq div{display:flex;width:max-content;gap:44px;animation:mq 50s linear infinite;font:400 30px/1 var(--disp)}
+.mq:hover div{animation-play-state:paused}
+.mq span::after{content:"✦";color:var(--ac);font-size:14px;margin-left:44px;vertical-align:middle}
+@keyframes mq{to{transform:translateX(-50%)}}
+.ed{margin:7vh 0 0;position:relative}
+.ed .box{border:1px solid var(--ink);transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s}
+.ed .box:focus-within{transform:translate(-6px,-6px);box-shadow:8px 8px 0 var(--ac)}
+textarea{display:block;width:100%;min-height:300px;padding:22px;border:0;outline:0;background:transparent;color:var(--ink);font:19px/1.7 var(--read);resize:vertical}
+.bar{display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding:14px 0}
+.bar .sp{flex:1}
+select{background:transparent;color:var(--ink);border:0;border-bottom:1px solid var(--ink);font:13px var(--mono);padding:8px 2px;cursor:pointer;max-width:100%}
+select option{background:var(--bg);color:var(--ink)}
+.btn{position:relative;overflow:hidden;background:transparent;color:var(--ink);border:1px solid var(--ink);padding:15px 26px;font:12px var(--mono);text-transform:uppercase;letter-spacing:.1em;cursor:pointer;transition:color .35s,transform .25s cubic-bezier(.2,.8,.2,1),border-color .35s}
+.btn::before{content:"";position:absolute;inset:0;background:var(--ac);transform:translateY(101%);transition:transform .45s cubic-bezier(.2,.8,.2,1);z-index:-1}
+.btn:hover{color:#0d0d0d;border-color:var(--ac)}.btn:hover::before{transform:none}
+.btn.fill{background:var(--ink);color:var(--bg)}.btn.fill:hover{color:#0d0d0d}
+.btn.on{background:var(--ink);color:var(--bg)}
+.btn.sm{padding:9px 14px;font-size:11px}
+.btn{isolation:isolate}
+#out{padding:12vh 0 8vh}
+.rv{opacity:0;transform:translateY(34px);transition:opacity .9s cubic-bezier(.2,.8,.2,1),transform .9s cubic-bezier(.2,.8,.2,1);transition-delay:var(--d,0s)}
+.rv.in{opacity:1;transform:none}
+.sc{display:grid;grid-template-columns:auto 1fr;gap:clamp(20px,5vw,80px);align-items:end}
+#big{font:400 clamp(110px,26vw,380px)/.8 var(--disp);letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+#big sup{font:11px var(--mono);letter-spacing:.09em;vertical-align:top;margin-left:6px;color:var(--mut)}
+#lab{font:400 clamp(34px,5vw,64px)/1 var(--disp);margin:0 0 10px}
+#desc{color:var(--mut);margin:0 0 14px;max-width:420px}
+@media(max-width:700px){.sc{grid-template-columns:1fr}}
+.scale{position:relative;height:56px;margin:46px 0 10px;border-bottom:1px solid var(--ink)}
+.scale i{position:absolute;bottom:0;width:1px;height:10px;background:var(--ink)}
+.scale i b{position:absolute;top:-22px;left:-18px;width:36px;text-align:center;font:10px var(--mono);color:var(--mut);font-weight:400}
+#marker{position:absolute;bottom:0;left:0;width:2px;height:44px;background:var(--ac);transition:left 1.6s cubic-bezier(.2,.8,.2,1)}
+#marker::after{content:"";position:absolute;top:-1px;left:-5px;width:12px;height:12px;background:var(--ac);border-radius:50%}
+.st{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0 28px;margin:50px 0}
+.st div{border-top:1px solid var(--ink);padding:12px 0 22px}
+.st b{display:block;font:400 clamp(38px,5vw,64px)/1.05 var(--disp);transition:color .3s}
+.st div:hover b{color:var(--ac)}
+h2{font:400 clamp(34px,5vw,64px)/1 var(--disp);margin:12vh 0 22px;letter-spacing:-.02em}
+h2 small{display:block;font:11px var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--mut);margin-top:10px}
+.rh{display:flex;align-items:flex-end;gap:1px;height:140px;border-bottom:1px solid var(--ink)}
+.rh i{flex:1;min-width:1px;background:var(--ink);transform-origin:bottom;transform:scaleY(0);transition:transform 1s cubic-bezier(.2,.8,.2,1),background .2s;transition-delay:calc(var(--i)*3ms);cursor:pointer}
+.in .rh i,.rh.in i{transform:scaleY(1)}
+.rh i.h{background:var(--ac)}.rh i:hover{background:var(--ac)}
+ol{list-style:none;margin:0;padding:0;border-top:1px solid var(--ink)}
+ol li{position:relative;display:grid;grid-template-columns:clamp(64px,10vw,150px) 1fr;gap:20px;padding:26px 14px;border-bottom:1px solid var(--ink);cursor:pointer;transition:color .45s,padding .45s cubic-bezier(.2,.8,.2,1)}
+ol li::before{content:"";position:absolute;inset:0;background:var(--ink);transform:scaleY(0);transform-origin:bottom;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+ol li>*{position:relative}
+ol li:hover::before{transform:none}ol li:hover{color:var(--bg);padding-left:28px}
+.no{font:400 clamp(48px,8vw,110px)/.9 var(--disp);color:transparent;-webkit-text-stroke:1px var(--ink);transition:-webkit-text-stroke-color .4s}
+ol li:hover .no{-webkit-text-stroke-color:var(--ac)}
+ol p{margin:0 0 10px;font:clamp(18px,2vw,24px)/1.45 var(--read)}
+ol .mono{transition:color .4s}ol li:hover .mono{color:var(--bg);opacity:.7}
+.tools{display:flex;gap:10px;margin-bottom:22px;flex-wrap:wrap}
+.text{font:clamp(18px,1.6vw,21px)/1.9 var(--read);white-space:pre-wrap;overflow-wrap:anywhere;max-width:880px}
+.s{transition:opacity .5s,background .4s;border-radius:2px}
+.heat .s{background:rgba(255,61,0,calc(var(--a)*.5))}
+.focus .s:not(mark){opacity:.16}
+mark{color:inherit;background:linear-gradient(var(--ac),var(--ac)) no-repeat 0 0/0% 100%;padding:1px 3px;transition:background-size 1s cubic-bezier(.7,0,.2,1) calc(.2s + var(--k)*.22s),color .3s}
+.on mark{background-size:100% 100%;color:#0d0d0d}
+.heat mark{background-color:transparent}
+mark sup{font:10px var(--mono);margin-right:3px}
+.hl{outline:1px solid var(--ac);outline-offset:3px}
+.fl{animation:fl 1.3s}@keyframes fl{20%{box-shadow:0 0 0 8px var(--ac)}}
+footer{border-top:1px solid var(--ln);padding:30px 0 50px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+#tip{position:fixed;z-index:70;pointer-events:none;background:var(--ink);color:var(--bg);font:11px var(--mono);padding:6px 9px;opacity:0;transition:opacity .2s;white-space:nowrap}
+#ring{position:fixed;left:0;top:0;width:34px;height:34px;border:1px solid #fff;border-radius:50%;mix-blend-mode:difference;pointer-events:none;z-index:80;opacity:0;transition:opacity .3s,background .3s}
+#ring.big{background:#fff}
+.w{position:relative}
+.gls{position:absolute;inset:0;overflow:hidden;z-index:-1;pointer-events:none}
+.gl{position:absolute;font:400 clamp(120px,22vw,320px)/1 var(--disp);color:transparent;-webkit-text-stroke:1px var(--ln);user-select:none;transition:translate .7s cubic-bezier(.2,.8,.2,1);animation:flt 9s ease-in-out infinite alternate}
+.gl.a{-webkit-text-stroke-color:var(--ac)}
+@keyframes flt{to{transform:translateY(-26px) rotate(3deg)}}
+.heroRow{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,5vw,80px);align-items:end;margin-bottom:6vh}
+.heroRow .lede{margin:0}
+@media(max-width:800px){.heroRow{grid-template-columns:1fr}}
+.demo{border:1px solid var(--ink);padding:18px 20px;background:var(--bg);opacity:0;animation:fade 1s 1s forwards}
+.demo p{font:19px/1.75 var(--read);margin:10px 0 14px}
+.demo p span{background:linear-gradient(var(--ac),var(--ac)) no-repeat 0 0/0% 100%;transition:background-size .8s cubic-bezier(.7,0,.2,1),box-shadow .3s}
+.demo p span.chk{box-shadow:inset 0 -2px var(--ac)}
+.demo p span.hd{background-size:100% 100%;color:#0d0d0d}
+.demo sup{font:10px var(--mono);margin-left:4px;color:var(--mut)}.demo .hd sup{color:#0d0d0d}
+.dm{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--ln);padding-top:10px}
+.dm b{font:400 46px/1 var(--disp);font-variant-numeric:tabular-nums}
+@media (prefers-reduced-motion:reduce){.demo{opacity:1}.gl{animation:none}}
+@media(pointer:coarse){#ring{display:none}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.ln span{transform:none}.lede{opacity:1}.rv{opacity:1;transform:none}.rh i{transform:none}mark{background-size:100% 100%;color:#0d0d0d}}
+</style>
+</head>
+<body>
+<div id="prog"></div><div id="ring"></div><div id="tip"></div>
+<div class="w">
+<header><b>Readable</b><button id="theme">◐ Light / Dark</button></header>
+<div class="gls" aria-hidden="true"><span class="gl" data-z="34" style="top:50px;right:3%">अ</span><span class="gl a" data-z="-22" style="top:330px;right:24%;font-size:clamp(90px,14vw,200px);animation-delay:-3s">த</span><span class="gl" data-z="48" style="top:110px;left:52%;animation-delay:-5s">Aa</span><span class="gl" data-z="-38" style="top:560px;left:1%;animation-delay:-2s">ক</span><span class="gl" data-z="22" style="top:700px;right:2%;animation-delay:-6s">ಕ</span></div>
+<h1 id="h1"><span class="ln" style="--n:0"><span>How hard is</span></span><span class="ln" style="--n:1"><span>your <em>chapter</em></span></span><span class="ln" style="--n:2"><span>to read?</span></span></h1>
+<div class="heroRow"><p class="lede">Paste a chapter in English, a European language or one of ten Indian languages. Get a score, a map of your sentence rhythm and the five sentences most worth rewriting. Free, and your text never leaves this page.</p>
+<div class="demo"><div class="mono">Live preview · scored by the real formula</div><p id="dp"><span>We left at dawn.</span> <span>Notwithstanding the aforementioned considerations, the committee's unanimous reconsideration of the regulatory framework remained fundamentally indeterminate.</span> <span>The cat sat.</span></p><div class="dm"><span class="mono">Reading ease</span><b id="dn">—</b></div></div></div>
+<div class="mq" aria-hidden="true"><div id="mq"></div></div>
+<section class="ed">
+<div class="mono" style="margin-bottom:12px">01 — Paste your chapter</div>
+<div class="box"><textarea id="in" placeholder="Start typing, or paste a chapter…"></textarea></div>
+<div class="bar">
+<button class="btn fill mag" id="go">Check readability</button>
+<select id="lang" aria-label="Language"><option value="auto">Auto-detect</option>
+<optgroup label="Indian languages"><option value="hi">हिन्दी — Hindi</option><option value="mr">मराठी — Marathi</option><option value="bn">বাংলা — Bengali</option><option value="gu">ગુજરાતી — Gujarati</option><option value="pa">ਪੰਜਾਬੀ — Punjabi</option><option value="ta">தமிழ் — Tamil</option><option value="te">తెలుగు — Telugu</option><option value="kn">ಕನ್ನಡ — Kannada</option><option value="ml">മലയാളം — Malayalam</option><option value="or">ଓଡ଼ିଆ — Odia</option></optgroup>
+<optgroup label="Other"><option value="en">English</option><option value="es">Español</option><option value="fr">Français</option><option value="de">Deutsch</option><option value="it">Italiano</option><option value="pt">Português</option><option value="nl">Nederlands</option></optgroup></select>
+<button class="btn sm mag" id="sample">Sample</button><button class="btn sm" id="clr">Clear</button>
+<span class="sp"></span><span class="mono" id="wc">0 words</span></div>
+<div class="mono" id="msg"></div>
+</section>
+<section id="out" hidden>
+<div class="sc rv"><div id="big">0</div><div><h3 id="lab" style="font-weight:400"></h3><p id="desc"></p><span class="mono" id="tag"></span></div></div>
+<div class="scale rv" id="scale"><div id="marker"></div></div>
+<div class="st" id="stats"></div>
+<h2 class="rv">Sentence rhythm<small>One line per sentence · height = word count · orange = hardest five</small></h2>
+<div class="rh rv" id="rh"></div>
+<h2 class="rv">The five to rewrite<small>Click one to jump to it in your chapter</small></h2>
+<ol id="hard"></ol>
+<h2 class="rv">Your chapter, marked up</h2>
+<div class="tools rv"><button class="btn sm" id="heat">Heat map</button><button class="btn sm" id="focus">Focus mode</button><button class="btn sm" id="copy">Copy report</button></div>
+<div class="text rv" id="text"></div>
+</section>
+<footer><span class="mono">Runs entirely in your browser</span><span class="mono">Indian-language scores are experimental — compare chapters, not languages</span></footer>
+</div>
+<script>
+const $=id=>document.getElementById(id),RM=matchMedia('(prefers-reduced-motion:reduce)').matches;
+const esc=s=>s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const L={
+en:{n:'English',f:(a,b)=>206.835-1.015*a-84.6*b,sw:'the and of to in that was it with he she you his her for'},
+es:{n:'Spanish',f:(a,b)=>206.84-1.02*a-60*b,sw:'el la de que y en los las un una por con se no es del su'},
+fr:{n:'French',f:(a,b)=>207-1.015*a-73.6*b,sw:'le la les de des et un une que est pas dans pour qui il elle'},
+de:{n:'German',f:(a,b)=>180-a-58.5*b,sw:'der die das und ist nicht ein eine zu den mit ich er sie auf'},
+it:{n:'Italian',f:(a,b)=>217-1.3*a-60*b,sw:'il lo di che e un una per non sono con del della gli le'},
+pt:{n:'Portuguese',f:(a,b)=>248.835-1.015*a-84.6*b,sw:'o a de que e do da em um uma para com não os as se'},
+nl:{n:'Dutch',f:(a,b)=>206.835-0.93*a-77*b,sw:'de het een en van ik dat is niet op te zijn met je'}};
+[['hi','Hindi',0x900,.5,5,'है और की के में को से पर था यह नहीं'],['mr','Marathi',0x900,.5,5,'आणि आहे होते या ला च्या नाही हे तो ती'],['bn','Bengali',0x980,.5,5],['pa','Punjabi',0xA00,.5,5],['gu','Gujarati',0xA80,.5,5],['or','Odia',0xB00,.5,5],['ta','Tamil',0xB80,.4,7],['te','Telugu',0xC00,.4,7],['kn','Kannada',0xC80,.4,7],['ml','Malayalam',0xD00,.4,7]].forEach(([k,n,b,m,th,sw])=>L[k]={n,ind:b,th,f:(a,s)=>206.835-1.015*a-84.6*s*m,sw:sw||'',wpm:170});
+Object.values(L).forEach(o=>o.set=new Set(o.sw.split(' ')));
+const V=/[aeiouyàáâäãèéêëìíîïòóôöõùúûüæœ]+/g,STR=new Set('aeoáéóàèòâêôãõ');
+const words=s=>s.match(/[\p{L}\p{N}\p{M}][\p{L}\p{N}\p{M}'’-]*/gu)||[];
+function ak(w){let n=0,pv=0;for(const ch of w){const c=ch.codePointAt(0);if(c<0x900||c>0xD7F){pv=0;continue}const o=c&127;
+if(((o>=5&&o<=0x39)||(o>=0x58&&o<=0x5f))&&!pv)n++;else if(c>=0xD7A)n++;pv=o===0x4d?1:0}return Math.max(1,n)}
+function syl(w,l){if(L[l].ind)return ak(w);w=w.toLowerCase().replace(/[^\p{L}]/gu,'');if(!w)return 0;
+if(l==='en'){if(w.length<=3)return 1;w=w.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/,'').replace(/^y/,'');const m=w.match(/[aeiouy]{1,2}/g);return m?m.length:1}
+let n=0;for(const g of w.match(V)||[]){n++;if(l==='es'||l==='it'||l==='pt')for(let i=1;i<g.length;i++)if(STR.has(g[i-1])&&STR.has(g[i]))n++}
+if(l==='fr'&&n>1&&/[^é]es?$/.test(w))n--;return Math.max(1,n)}
+function stop(t,keys){const w=words(t).slice(0,700).map(x=>x.toLowerCase());let best=keys[0],bn=-1;
+for(const k of keys){const c=w.reduce((a,x)=>a+(L[k].set.has(x)?1:0),0);if(c>bn){bn=c;best=k}}return best}
+function detect(t){const cnt={};let tot=0;for(const ch of t.slice(0,4000)){if(/\s/.test(ch))continue;tot++;const c=ch.codePointAt(0);if(c>=0x900&&c<0xD80){const b=c&~127;cnt[b]=(cnt[b]||0)+1}}
+let bb=0,bm=0;for(const b in cnt)if(cnt[b]>bm){bm=cnt[b];bb=+b}
+if(bm>tot*.2){if(bb===0x900)return stop(t,['hi','mr']);return Object.keys(L).find(k=>L[k].ind===bb)}
+return stop(t,['en','es','fr','de','it','pt','nl'])}
+function split(t){const re=/[^.!?।॥\n]*[^\s.!?।॥\n][^.!?।॥\n]*(?:[.!?।॥]+["'”’)\]»]*|(?=\n)|$)/g,out=[];let m;
+while((m=re.exec(t))){if(!m[0].length){re.lastIndex++;continue}
+const s={start:m.index,end:m.index+m[0].length},p=out[out.length-1];
+if(p&&/\b(Mr|Mrs|Ms|Dr|St|Prof|Sr|Sra|Jr|vs|etc|Mme|Hr)\.$/.test(t.slice(p.start,p.end))&&!/\n/.test(t.slice(p.end,s.start)))p.end=s.end;else out.push(s)}
+return out}
+const label=f=>f>=90?['Very easy','Effortless, like overheard conversation.']:f>=80?['Easy','Smooth and quick to read.']:f>=70?['Fairly easy','Comfortable for most adult readers.']:f>=60?['Plain language','Clear for a broad audience.']:f>=50?['Fairly difficult','Readers will need some focus.']:f>=30?['Difficult','Dense. Expect slower reading.']:['Very difficult','Very dense. Split and simplify.'];
+function cnt(el,to,d,x){const t0=performance.now();x=x||'';if(RM){el.textContent=to.toFixed(d)+x;return}
+(function f(n){const p=Math.min(1,(n-t0)/1100),e=1-Math.pow(1-p,4);el.textContent=(to*e).toFixed(d)+x;if(p<1)requestAnimationFrame(f)})(t0)}
+function scr(el,txt){if(RM){el.textContent=txt;return}const C='ABCDEFGHIJKLMNOPQRSTUVWXYZ',t0=performance.now();
+(function f(n){const p=Math.min(1,(n-t0)/700);el.textContent=[...txt].map((c,i)=>c===' '||i<p*txt.length?c:C[Math.random()*26|0]).join('');if(p<1)requestAnimationFrame(f)})(t0)}
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{threshold:.12});
+let REPORT='',SS=[];
+function run(){
+const t=$('in').value;
+if(words(t).length<20){$('msg').textContent='Paste at least a few sentences (20+ words).';return}
+let lg=$('lang').value;const auto=lg==='auto';if(auto)lg=detect(t);const D=L[lg],F=D.f;
+$('msg').textContent=auto?'Detected: '+D.n:'';
+const th=D.th||(['es','it','pt'].includes(lg)?4:3);
+const ss=split(t).map(s=>{s.t=t.slice(s.start,s.end);const w=words(s.t),sy=w.map(x=>syl(x,lg));s.w=w.length;s.s=sy.reduce((a,b)=>a+b,0);s.long=sy.filter(x=>x>=th).length;s.e=s.w?F(s.w,s.s/s.w):100;return s}).filter(s=>s.w>0);
+ss.forEach((s,i)=>s.i=i);SS=ss;
+const W=ss.reduce((a,s)=>a+s.w,0),S=ss.reduce((a,s)=>a+s.s,0),N=ss.length,LW=ss.reduce((a,s)=>a+s.long,0);
+const fre=F(W/N,S/W),sc=Math.max(0,Math.min(100,fre)),lb=label(fre);
+const top=ss.filter(s=>s.w>=4).sort((a,b)=>a.e-b.e).slice(0,5);top.forEach((s,i)=>s.rank=i+1);
+const mx=Math.max(...ss.map(s=>s.w));
+const out=$('out');out.hidden=false;out.querySelectorAll('.rv').forEach(e=>{e.classList.remove('in')});
+$('big').innerHTML='<span id="bn">0</span><sup>/100</sup>';cnt($('bn'),sc,0);scr($('lab'),lb[0]);
+$('desc').textContent=lb[1]+' Fiction often lands around 60–80.';$('tag').textContent=D.n+(D.ind?' · experimental akshara model':' · Flesch-style formula');
+$('scale').querySelectorAll('i').forEach(e=>e.remove());
+$('scale').insertAdjacentHTML('afterbegin',[0,30,50,60,70,80,90,100].map(v=>`<i style="left:${v}%"><b>${v}</b></i>`).join(''));
+$('marker').style.left='0%';setTimeout(()=>$('marker').style.left=sc+'%',250);
+const wpm=D.wpm||230,st=[[W,0,'','Words'],[N,0,'','Sentences'],[W/N,1,'','Words per sentence'],[W/wpm,0,' min','Reading time'],[100*LW/W,0,'%','Long words'],[mx,0,'','Longest sentence']];
+$('stats').innerHTML=st.map((x,i)=>`<div class="rv" style="--d:${i*.07}s"><b data-v="${x[0]}" data-d="${x[1]}" data-x="${x[2]}">0</b><span class="mono">${x[3]}</span></div>`).join('');
+$('stats').querySelectorAll('b').forEach(b=>cnt(b,+b.dataset.v,+b.dataset.d,b.dataset.x));
+$('rh').innerHTML=ss.map((s,i)=>`<i data-i="${i}" class="${s.rank?'h':''}" style="--i:${i};height:${Math.max(3,s.w/mx*100)}%" data-t="Sentence ${i+1} · ${s.w} words"></i>`).join('');
+$('hard').innerHTML=top.map((s,i)=>{const tp=[];if(s.w>=30)tp.push('very long, try splitting');else if(s.w>=22)tp.push('long, consider a split');if(s.long>=4)tp.push('heavy vocabulary');if(!tp.length)tp.push('dense wording');
+return `<li class="rv" data-i="${s.i}" style="--d:${i*.08}s"><span class="no">0${s.rank}</span><div><p>${esc(s.t.trim())}</p><span class="mono">${s.w} words · ${s.long} long words · ${tp.join(', ')}</span></div></li>`}).join('');
+let h='',pos=0;ss.forEach(s=>{h+=esc(t.slice(pos,s.start));const a=Math.max(0,Math.min(1,1-s.e/100)).toFixed(2),b=esc(t.slice(s.start,s.end));
+h+=s.rank?`<mark id="s${s.i}" class="s" style="--a:${a};--k:${s.rank-1}"><sup>${s.rank}</sup>${b}</mark>`:`<span id="s${s.i}" class="s" style="--a:${a}">${b}</span>`;pos=s.end});
+$('text').innerHTML=h+esc(t.slice(pos));
+REPORT=`Readability report (${D.n})\nScore: ${fre.toFixed(0)}/100 (${lb[0]})\nWords: ${W} · Sentences: ${N} · ${(W/N).toFixed(1)} words/sentence\n\nHardest sentences:\n`+top.map(s=>s.rank+'. '+s.t.trim()).join('\n');
+void out.offsetWidth;out.querySelectorAll('.rv').forEach(e=>io.observe(e));
+setTimeout(()=>out.scrollIntoView({behavior:RM?'auto':'smooth'}),60)}
+function go(i){const e=$('s'+i);if(!e)return;e.scrollIntoView({behavior:RM?'auto':'smooth',block:'center'});e.classList.remove('fl');void e.offsetWidth;e.classList.add('fl')}
+const hlx=(i,on)=>{const e=$('s'+i);if(e)e.classList.toggle('hl',on)};
+$('go').onclick=run;
+$('clr').onclick=()=>{$('in').value='';$('out').hidden=true;$('msg').textContent='';$('wc').textContent='0 words'};
+$('in').oninput=()=>{$('wc').textContent=words($('in').value).length.toLocaleString()+' words'};
+$('hard').onclick=e=>{const l=e.target.closest('li');if(l)go(l.dataset.i)};
+$('rh').onclick=e=>{const b=e.target.closest('i');if(b)go(b.dataset.i)};
+document.addEventListener('mouseover',e=>{const l=e.target.closest('#hard li,#rh i');if(l)hlx(l.dataset.i,true)});
+document.addEventListener('mouseout',e=>{const l=e.target.closest('#hard li,#rh i');if(l)hlx(l.dataset.i,false)});
+const tg=(b,c)=>{$('text').classList.toggle(c);b.classList.toggle('on')};
+$('heat').onclick=function(){tg(this,'heat')};$('focus').onclick=function(){tg(this,'focus')};
+$('copy').onclick=async function(){try{await navigator.clipboard.writeText(REPORT);this.textContent='Copied'}catch(e){this.textContent='Copy blocked'}setTimeout(()=>this.textContent='Copy report',1600)};
+$('theme').onclick=()=>{const r=document.documentElement,c=r.dataset.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');r.dataset.theme=c==='dark'?'light':'dark'};
+const SAMPLES=["The rain had been falling over the harbour for three days, and nobody in the village of Marrow's End could remember a time when the water had risen so quickly or the fishing boats had stayed so long at anchor.\n\nShe waited. The letter had said nothing about the consequences of deliberately disregarding the administrative regulations that governed the inheritance of the lighthouse, which, given the circumstances and the extraordinary reluctance of the magistrate, seemed an unfortunate and rather conspicuous omission.\n\n\"Come in,\" said Tom. The door was open. It was always open.",
+"बारिश तीन दिनों से बंदरगाह पर लगातार गिर रही थी। गाँव में किसी को याद नहीं था कि पानी कभी इतनी तेज़ी से चढ़ा हो।\n\nवह इंतज़ार करती रही। पत्र में उस प्रशासनिक नियमावली की जानबूझकर अनदेखी करने के परिणामों के बारे में कुछ भी नहीं लिखा था, जो विरासत में मिले इस प्रकाश-स्तंभ के स्वामित्व को नियंत्रित करती थी, और यह चूक, परिस्थितियों को देखते हुए, काफ़ी खटकने वाली थी।\n\n\"आ जाओ,\" राम ने कहा। दरवाज़ा खुला था। वह हमेशा खुला रहता था।"];let si=0;
+$('sample').onclick=()=>{$('in').value=SAMPLES[si++%2];$('in').oninput();$('lang').value='auto';run()};
+const NAMES='English Español Français Deutsch Italiano Português Nederlands हिन्दी मराठी বাংলা ગુજરાતી ਪੰਜਾਬੀ தமிழ் తెలుగు ಕನ್ನಡ മലയാളം ଓଡ଼ିଆ'.split(' ').map(n=>`<span>${n}</span>`).join('');$('mq').innerHTML=NAMES+NAMES;
+(async()=>{const dp=$('dp');if(!dp)return;const sp=[...dp.children],sc=s=>{const w=words(s),y=w.reduce((a,x)=>a+syl(x,'en'),0);return L.en.f(w.length,y/w.length)},E=sp.map(s=>sc(s.textContent)),lo=E.indexOf(Math.min(...E)),all=Math.max(0,Math.min(100,sc(dp.textContent))),sl=ms=>new Promise(r=>setTimeout(r,RM?0:ms));
+while(1){sp.forEach(s=>{s.className='';const u=s.querySelector('sup');if(u)u.remove()});$('dn').textContent='—';await sl(1800);
+for(let i=0;i<sp.length;i++){sp[i].classList.add('chk');await sl(700);sp[i].insertAdjacentHTML('beforeend','<sup>'+Math.max(0,Math.round(E[i]))+'</sup>');sp[i].classList.remove('chk')}
+sp[lo].classList.add('hd');cnt($('dn'),all,0);if(RM)return;await sl(4500)}})();
+addEventListener('pointermove',e=>{if(RM)return;const x=e.clientX/innerWidth-.5,y=e.clientY/innerHeight-.5;document.querySelectorAll('.gl').forEach(g=>{const z=+g.dataset.z;g.style.translate=(x*z)+'px '+(y*z)+'px'})});
+const h1=$('h1'),pg=$('prog');addEventListener('scroll',()=>{const y=scrollY,m=document.documentElement.scrollHeight-innerHeight;pg.style.transform=`scaleX(${m>0?y/m:0})`;if(!RM&&y<900)h1.style.transform=`translateY(${y*.18}px)`},{passive:true});
+document.querySelectorAll('.mag').forEach(b=>{b.style.willChange='transform';b.addEventListener('pointermove',e=>{const r=b.getBoundingClientRect();b.style.transform=`translate(${(e.clientX-r.left-r.width/2)*.2}px,${(e.clientY-r.top-r.height/2)*.3}px)`});b.addEventListener('pointerleave',()=>b.style.transform='')});
+if(matchMedia('(pointer:fine)').matches&&!RM){const ring=$('ring'),tip=$('tip');let mx=0,my=0,rx=0,ry=0,big=0;
+addEventListener('pointermove',e=>{mx=e.clientX;my=e.clientY;ring.style.opacity=1;tip.style.transform=`translate(${mx+16}px,${my+16}px)`});
+document.addEventListener('pointerover',e=>{big=!!e.target.closest('a,button,select,li,#rh i');ring.classList.toggle('big',big);const b=e.target.closest('#rh i');tip.textContent=b?b.dataset.t:'';tip.style.opacity=b?1:0});
+(function tick(){rx+=(mx-rx)*.16;ry+=(my-ry)*.16;ring.style.transform=`translate(${rx-17}px,${ry-17}px) scale(${big?1.7:1})`;requestAnimationFrame(tick)})()}
+</script>
+</body>
+</html>
